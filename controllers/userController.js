@@ -7,8 +7,7 @@ export const registerUser = async (req, res, next) => {
         let user = await User.findOne({email});
 
         if(user) {
-            // return res.status(400).json({message: "User have already registered"})
-            throw new Error("User have already registered")
+            throw new Error("User have already registered");
         }
 
         user = await User.create({
@@ -28,9 +27,37 @@ export const registerUser = async (req, res, next) => {
         })
 
     } catch (error) {
-        // return res.status(500).json({message: `Something went wrong - ${error}`});
         next(error);
     }
 }
 
-export {registerUser}
+export const loginUser = async (req, res, next) => {
+    try {
+        const {email, password} = req.body;
+
+        let user = await User.findOne({email});
+
+        if(!user){
+            throw new Error("Email not found");
+        }
+
+        if(await user.comparePassword(password)) {
+            return res.status(201).json({
+                _id: user._id,
+                avatar: user.avatar,
+                name: user.name,
+                email: user.email,
+                verified: user.verified,
+                admin: user.admin,
+                token: await user.generateJWT(),
+            })
+        } else {
+            throw new Error("Invalid Password");
+        }
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+export {registerUser, loginUser}
