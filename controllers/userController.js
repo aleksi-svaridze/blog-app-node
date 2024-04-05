@@ -1,5 +1,6 @@
 import User from '../models/User'
 import { fileRemover } from '../utils/fileRemover';
+import {uploadPicture} from '../middleware/uploadPictureMiddleware';
 
 export const registerUser = async (req, res, next) => {
     try {
@@ -121,9 +122,10 @@ export const updateProfile = async (req, res, next) => {
 export const updateProfilePicture = async (req, res, next) => {
     try {
         const upload = uploadPicture.single('profilePicture');
+
         upload(req, res, async function(err) {
             if(err){
-                const error = new Error('Unknown error while uploading');
+                const error = new Error('Unknown error while uploading - ' + err.message);
                 next(error);
             } else {
                 if(req.file){
