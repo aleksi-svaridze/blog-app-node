@@ -1,4 +1,5 @@
 import User from '../models/User'
+import { fileRemover } from '../utils/fileRemover';
 
 export const registerUser = async (req, res, next) => {
     try {
@@ -112,6 +113,54 @@ export const updateProfile = async (req, res, next) => {
             token: await updatedUserProfile.generateJWT(),
         })
         
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const updateProfilePicture = async (req, res, next) => {
+    try {
+        const upload = uploadPicture.single('profilePicture');
+        upload(req, res, async function(err) {
+            if(err){
+                const error = new Error('Unknown error while uploading');
+                next(error);
+            } else {
+                if(req.file){
+                    const updatedUser = await User.findByIdAndUpdate(req.user._id, {
+                        avatar: req.file.filename,
+                    }, {
+                        new: true
+                    });
+
+                    res.json({
+                        _id: updatedUser._id,
+                        avatar: updatedUser.avatar,
+                        name: updatedUser.name,
+                        email: updatedUser.email,
+                        verified: updatedUser.verified,
+                        admin: updatedUser.admin,
+                        token: await updatedUser.generateJWT(),
+                    })
+                } else {
+                    let filename;
+                    let updatedUser = await User.findById(req.user._id);
+                    filename = updatedUser.avatar;
+                    updatedUser.avatar = '';
+                    await updatedUser.save();
+                    fileRemover(filename);
+                    res.json({
+                        _id: updatedUser._id,
+                        avatar: updatedUser.avatar,
+                        name: updatedUser.name,
+                        email: updatedUser.email,
+                        verified: updatedUser.verified,
+                        admin: updatedUser.admin,
+                        token: await updatedUser.generateJWT(),
+                    })
+                }
+            }
+        })
     } catch (error) {
         next(error);
     }
